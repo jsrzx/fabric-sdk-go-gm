@@ -58,7 +58,7 @@ func (opts *SHA3_384Opts) Algorithm() string {
 	return SHA3_384
 }
 
-//add by bryan
+// add by bryan
 // GMSM3Opts 国密 SM3.
 type GMSM3Opts struct {
 }
@@ -79,6 +79,8 @@ func GetHashOpt(hashFunction string) (HashOpts, error) {
 		return &SHA3_256Opts{}, nil
 	case SHA3_384:
 		return &SHA3_384Opts{}, nil
+	case GMSM3:
+		return &GMSM3Opts{}, nil
 	}
 	return nil, fmt.Errorf("hash function not recognized [%s]", hashFunction)
 }

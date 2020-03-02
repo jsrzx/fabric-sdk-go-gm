@@ -25,8 +25,8 @@ import (
 	bccsp "github.com/hyperledger/fabric-sdk-go/internal/github.com/hyperledger/fabric/sdkpatch/cryptosuitebridge"
 	flogging "github.com/hyperledger/fabric-sdk-go/internal/github.com/hyperledger/fabric/sdkpatch/logbridge"
 	logging "github.com/hyperledger/fabric-sdk-go/internal/github.com/hyperledger/fabric/sdkpatch/logbridge"
-	"github.com/pkg/errors"
 	"github.com/hyperledger/fabric-sdk-go/internal/github.com/tjfoc/gmsm/sm2"
+	"github.com/pkg/errors"
 )
 
 var mspIdentityLogger = flogging.MustGetLogger("msp.identity")
@@ -188,6 +188,8 @@ func (id *identity) getHashOpt(hashFamily string) (core.HashOpts, error) {
 		return bccsp.GetHashOpt(bccsp.SHA256)
 	case bccsp.SHA3:
 		return bccsp.GetHashOpt(bccsp.SHA3_256)
+	case bccsp.GMSM3:
+		return bccsp.GetHashOpt(bccsp.GMSM3)
 	}
 	return nil, errors.Errorf("hash familiy not recognized [%s]", hashFamily)
 }
@@ -201,7 +203,7 @@ type signingidentity struct {
 }
 
 func newSigningIdentity(cert *sm2.Certificate, pk core.Key, signer crypto.Signer, msp *bccspmsp) (SigningIdentity, error) {
-	//mspIdentityLogger.Infof("Creating signing identity instance for ID %s", id)
+	// mspIdentityLogger.Infof("Creating signing identity instance for ID %s", id)
 	mspId, err := newIdentity(cert, pk, msp)
 	if err != nil {
 		return nil, err
@@ -211,7 +213,7 @@ func newSigningIdentity(cert *sm2.Certificate, pk core.Key, signer crypto.Signer
 
 // Sign produces a signature over msg, signed by this instance
 func (id *signingidentity) Sign(msg []byte) ([]byte, error) {
-	//mspIdentityLogger.Infof("Signing message")
+	// mspIdentityLogger.Infof("Signing message")
 
 	// Compute Hash
 	hashOpt, err := id.getHashOpt(id.msp.cryptoConfig.SignatureHashFamily)

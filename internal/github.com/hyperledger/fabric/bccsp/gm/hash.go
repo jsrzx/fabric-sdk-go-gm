@@ -21,7 +21,7 @@ import (
 	"github.com/hyperledger/fabric-sdk-go/internal/github.com/hyperledger/fabric/bccsp"
 )
 
-//定义hasher 结构体，实现内部的一个 Hasher 接口
+// 定义hasher 结构体，实现内部的一个 Hasher 接口
 type hasher struct {
 	hash func() hash.Hash
 }

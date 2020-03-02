@@ -283,7 +283,7 @@ func (ks *fileBasedKeyStore) storePublicKey(alias string, publicKey interface{})
 }
 
 func (ks *fileBasedKeyStore) storeKey(alias string, key []byte) error {
-	//pem, err := utils.AEStoEncryptedPEM(key, ks.pwd)
+	// pem, err := utils.AEStoEncryptedPEM(key, ks.pwd)
 
 	if len(ks.pwd) == 0 {
 		ks.pwd = nil
@@ -361,7 +361,7 @@ func (ks *fileBasedKeyStore) loadKey(alias string) ([]byte, error) {
 		return nil, err
 	}
 
-	//key, err := utils.PEMtoAES(pem, ks.pwd)
+	// key, err := utils.PEMtoAES(pem, ks.pwd)
 	if len(ks.pwd) == 0 {
 		ks.pwd = nil
 	}

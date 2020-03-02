@@ -130,10 +130,12 @@ func (c *Client) Init() error {
 		if err != nil {
 			return err
 		}
+		SetProviderName("GM")
 
 		// Successfully initialized the client
 		c.initialized = true
 	}
+
 	return nil
 }
 
@@ -148,7 +150,7 @@ func (c *Client) initHTTPClient(serverName string) error {
 		}
 		// set the default ciphers
 		tlsConfig.CipherSuites = tls.DefaultCipherSuites
-		//set the host name override
+		// set the host name override
 		tlsConfig.ServerName = serverName
 
 		tr.TLSClientConfig = tlsConfig
@@ -197,16 +199,22 @@ func (c *Client) GenCSR(req *api.CSRInfo, id string) ([]byte, core.Key, error) {
 	cr.CN = id
 
 	if (cr.KeyRequest == nil) || (cr.KeyRequest.Size() == 0 && cr.KeyRequest.Algo() == "") {
-		cr.KeyRequest = api.NewBasicKeyRequest()
+		cr.KeyRequest = newCfsslBasicKeyRequest(api.NewBasicKeyRequest())
 	}
 
-	key, cspSigner, err := util.BCCSPKeyRequestGenerate(cr, c.csp)
+	key, bccspkey, cspSigner, err := util.BCCSPKeyRequestGenerate(cr, c.csp)
 	if err != nil {
 		log.Debugf("failed generating BCCSP key: %s", err)
 		return nil, nil, err
 	}
 
-	csrPEM, err := csr.Generate(cspSigner, cr)
+	// modify by bryan
+	var csrPEM []byte
+	if IsGMConfig() {
+		csrPEM, err = generate(cspSigner, cr, bccspkey)
+	} else {
+		csrPEM, err = csr.Generate(cspSigner, cr)
+	}
 	if err != nil {
 		log.Debugf("failed generating CSR: %s", err)
 		return nil, nil, err
@@ -377,7 +385,7 @@ func (c *Client) NewIdentity(creds []credential.Credential) (*Identity, error) {
 		return NewIdentity(c, name, creds), nil
 	}
 
-	//TODO: Get the enrollment ID from the creds...they all should return same value
+	// TODO: Get the enrollment ID from the creds...they all should return same value
 	// for i := 1; i < len(creds); i++ {
 	// 	localid, err := creds[i].EnrollmentID()
 	// 	if err != nil {
@@ -573,8 +581,8 @@ func (c *Client) checkX509Enrollment() error {
 	return errors.New("X509 enrollment information does not exist")
 }
 
-func newCfsslBasicKeyRequest(bkr *api.BasicKeyRequest) *csr.KeyRequest {
-	return &csr.KeyRequest{A: bkr.Algo, S: bkr.Size}
+func newCfsslBasicKeyRequest(bkr *api.BasicKeyRequest) *csr.BasicKeyRequest {
+	return &csr.BasicKeyRequest{A: bkr.Algo, S: bkr.Size}
 }
 
 // NormalizeURL normalizes a URL (from cfssl)

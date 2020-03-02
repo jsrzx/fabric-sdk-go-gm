@@ -38,6 +38,7 @@ import (
 	"github.com/cloudflare/cfssl/helpers"
 	factory "github.com/hyperledger/fabric-sdk-go/internal/github.com/hyperledger/fabric-ca/sdkpatch/cryptosuitebridge"
 	log "github.com/hyperledger/fabric-sdk-go/internal/github.com/hyperledger/fabric-ca/sdkpatch/logbridge"
+	"github.com/hyperledger/fabric-sdk-go/internal/github.com/hyperledger/fabric/bccsp"
 	"github.com/hyperledger/fabric-sdk-go/internal/github.com/hyperledger/fabric/bccsp/gm"
 	"github.com/hyperledger/fabric-sdk-go/internal/github.com/tjfoc/gmsm/sm2"
 	gtls "github.com/hyperledger/fabric-sdk-go/internal/github.com/tjfoc/gmtls"
@@ -46,7 +47,7 @@ import (
 
 // getBCCSPKeyOpts generates a key as specified in the request.
 // This supports ECDSA and RSA.
-func getBCCSPKeyOpts(kr *csr.KeyRequest, ephemeral bool) (opts core.KeyGenOpts, err error) {
+func getBCCSPKeyOpts(kr csr.KeyRequest, ephemeral bool) (opts core.KeyGenOpts, err error) {
 	if kr == nil {
 		return factory.GetECDSAKeyGenOpts(ephemeral), nil
 	}
@@ -77,8 +78,7 @@ func getBCCSPKeyOpts(kr *csr.KeyRequest, ephemeral bool) (opts core.KeyGenOpts, 
 		default:
 			return nil, errors.Errorf("Invalid ECDSA key size: %d", kr.Size())
 		}
-
-		//modify by bryan
+		// modify by bryan
 	case "gmsm2":
 		return factory.GetGMSM2KeyGenOpts(ephemeral), nil
 	default:
@@ -92,7 +92,7 @@ func GetSignerFromCert(cert *x509.Certificate, csp core.CryptoSuite) (core.Key, 
 		return nil, nil, errors.New("CSP was not initialized")
 	}
 
-	//modify by bryan
+	// modify by bryan
 	switch cert.PublicKey.(type) {
 	case sm2.PublicKey:
 		log.Infof("xxxxx cert is sm2 puk")
@@ -145,21 +145,21 @@ func GetSignerFromCertFile(certFile string, csp core.CryptoSuite) (core.Key, cry
 
 // BCCSPKeyRequestGenerate generates keys through BCCSP
 // somewhat mirroring to cfssl/req.KeyRequest.Generate()
-func BCCSPKeyRequestGenerate(req *csr.CertificateRequest, myCSP core.CryptoSuite) (core.Key, crypto.Signer, error) {
+func BCCSPKeyRequestGenerate(req *csr.CertificateRequest, myCSP core.CryptoSuite) (core.Key, bccsp.Key, crypto.Signer, error) {
 	log.Infof("generating key: %+v", req.KeyRequest)
 	keyOpts, err := getBCCSPKeyOpts(req.KeyRequest, false)
 	if err != nil {
-		return nil, nil, err
+		return nil, nil, nil, err
 	}
-	key, err := myCSP.KeyGen(keyOpts)
+	key, bcspKey, err := myCSP.KeyGen(keyOpts)
 	if err != nil {
-		return nil, nil, err
+		return nil, nil, nil, err
 	}
 	cspSigner, err := factory.NewCspSigner(myCSP, key)
 	if err != nil {
-		return nil, nil, errors.WithMessage(err, "Failed initializing CryptoSigner")
+		return nil, nil, nil, errors.WithMessage(err, "Failed initializing CryptoSigner")
 	}
-	return key, cspSigner, nil
+	return key, bcspKey, cspSigner, nil
 }
 
 // ImportBCCSPKeyFromPEM attempts to create a private BCCSP key from a pem file keyFile
@@ -184,7 +184,7 @@ func ImportBCCSPKeyFromPEMBytes(keyBuff []byte, myCSP core.CryptoSuite, temporar
 		return nil, errors.WithMessage(err, fmt.Sprintf("Failed parsing private key from %s", keyFile))
 	}
 	switch key.(type) {
-	//modify by bryan
+	// modify by bryan
 	case *sm2.PrivateKey:
 		log.Debug("xxxx sm2.PrivateKey!!!!!!!!!!!")
 		block, _ := pem.Decode(keyBuff)
@@ -271,7 +271,7 @@ func LoadX509KeyPair(certFile, keyFile []byte, csp core.CryptoSuite) (*tls.Certi
 	return cert, nil
 }
 
-//add by bryan
+// add by bryan
 func LoadX509KeyPairSM2(certFile, keyFile string, csp core.CryptoSuite) (*gtls.Certificate, error) {
 
 	certPEMBlock, err := ioutil.ReadFile(certFile)

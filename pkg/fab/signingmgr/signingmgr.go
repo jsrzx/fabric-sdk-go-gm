@@ -28,8 +28,8 @@ type SigningManager struct {
 // @param {Config} config - configuration provider
 // @returns {SigningManager} new signing manager
 func New(cryptoProvider core.CryptoSuite) (*SigningManager, error) {
-	//modify by bryan
-	return &SigningManager{cryptoProvider: cryptoProvider, hashOpts: cryptosuite.GetSHA256Opts()}, nil
+	// modify by bryan. The hash algorithm must same as blockchain with SM3
+	return &SigningManager{cryptoProvider: cryptoProvider, hashOpts: cryptosuite.GetSM3Opts()}, nil
 }
 
 // Sign will sign the given object using provided key

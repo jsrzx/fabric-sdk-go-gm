@@ -391,7 +391,6 @@ func (sdk *FabricSDK) ChannelContext(channelID string, options ...ContextOption)
 
 // initializeCryptoSuite Initializes crypto provider
 func (sdk *FabricSDK) initializeCryptoSuite(cryptoSuiteConfig core.CryptoSuiteConfig) error {
-	logger.Debugf("security provider is %s", cryptoSuiteConfig.SecurityProvider())
 	var err error
 	sdk.cryptoSuite, err = sdk.opts.Core.CreateCryptoSuiteProvider(cryptoSuiteConfig)
 	if err != nil {
